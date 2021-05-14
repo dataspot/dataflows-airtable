@@ -1,5 +1,6 @@
 from requests.sessions import Session
 from .utilities import get_session, rate_limiter
+from .consts import AIRTABLE_ID_FIELD
 
 
 class AirtableUploader():
@@ -45,9 +46,9 @@ def dump_to_airtable(tables, apikey='env://DATAFLOWS_AIRTABLE_APIKEY'):
     def upload(rows, uploaders):
         for row in rows:
             for uploader in uploaders:
-                rid = row.get('__airtable_id')
+                rid = row.get(AIRTABLE_ID_FIELD)
                 if rid is not None:
-                    fields = dict((k, v) for k, v in row.items() if k != '__airtable_id')
+                    fields = dict((k, v) for k, v in row.items() if k != AIRTABLE_ID_FIELD)
                     uploader.update(rid, fields)
                 else:
                     uploader.insert(row)

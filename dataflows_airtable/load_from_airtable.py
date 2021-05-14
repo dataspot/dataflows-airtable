@@ -1,5 +1,6 @@
 import dataflows as DF
 from .utilities import get_session, rate_limiter
+from .consts import AIRTABLE_ID_FIELD
 
 
 def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_APIKEY'):
@@ -15,7 +16,7 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
         while True:
             resp = rate_limiter.execute(lambda: session.get(url, params=params).json())
             yield from map(
-                lambda r: dict(__airtable_id=r['id'], **r['fields']),
+                lambda r: dict(**{AIRTABLE_ID_FIELD: r['id']}, **r['fields']),
                 resp.get('records', [])
             )
             if not resp.get('offset'):
