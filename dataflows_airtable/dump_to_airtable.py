@@ -46,7 +46,7 @@ def dump_to_airtable(tables, apikey='env://DATAFLOWS_AIRTABLE_APIKEY'):
     def upload(rows, uploaders):
         for row in rows:
             for uploader in uploaders:
-                rid = row.get(AIRTABLE_ID_FIELD)
+                rid = row.pop(AIRTABLE_ID_FIELD, None)
                 if rid is not None:
                     fields = dict((k, v) for k, v in row.items() if k != AIRTABLE_ID_FIELD)
                     uploader.update(rid, fields)
