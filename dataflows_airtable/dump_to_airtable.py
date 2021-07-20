@@ -4,12 +4,13 @@ from .consts import AIRTABLE_ID_FIELD
 
 
 class AirtableUploader():
-    def __init__(self, session: Session, base, table):
+    def __init__(self, session: Session, base, table, typecast=False):
         self.session = session
         self.base = base
         self.table = table
         self.inserts = []
         self.updates = []
+        self.typecast = typecast
 
     def insert(self, row):
         self.inserts.append(row)
@@ -28,13 +29,13 @@ class AirtableUploader():
             self.batch_update()
 
     def batch_insert(self):
-        payload = dict(records=list(dict(fields=r) for r in self.inserts))
+        payload = dict(records=list(dict(fields=r) for r in self.inserts), typecast=self.typecast)
         self.inserts = []
         url = f'https://api.airtable.com/v0/{self.base}/{self.table}'
         rate_limiter.execute(lambda: self.session.post(url, json=payload))
 
     def batch_update(self):
-        payload = dict(records=list(dict(id=rid, fields=fields) for rid, fields in self.updates))
+        payload = dict(records=list(dict(id=rid, fields=fields) for rid, fields in self.updates), typecast=self.typecast)
         self.updates = []
         url = f'https://api.airtable.com/v0/{self.base}/{self.table}'
         rate_limiter.execute(lambda: self.session.patch(url, json=payload))
@@ -62,7 +63,7 @@ def dump_to_airtable(tables, apikey='env://DATAFLOWS_AIRTABLE_APIKEY'):
             uploaders = []
             for (base, table), options in tables.items():
                 if options.get('resource-name') == res.res.name:
-                    uploaders.append(AirtableUploader(session, base, table))
+                    uploaders.append(AirtableUploader(session, base, table, typecast=bool(options.get('typecast'))))
             if len(uploaders) == 0:
                 yield res
             else:
