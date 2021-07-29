@@ -1,4 +1,6 @@
 from requests.sessions import Session
+from decimal import Decimal
+
 from .utilities import get_session, rate_limiter
 from .consts import AIRTABLE_ID_FIELD
 
@@ -46,6 +48,7 @@ def dump_to_airtable(tables, apikey='env://DATAFLOWS_AIRTABLE_APIKEY'):
 
     def upload(rows, uploaders):
         for row in rows:
+            row = dict((k, float(v) if isinstance(v, Decimal) else v) for k, v in row.items())
             for uploader in uploaders:
                 rid = row.pop(AIRTABLE_ID_FIELD, None)
                 if rid is not None:
