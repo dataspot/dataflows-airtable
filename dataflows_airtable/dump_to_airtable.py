@@ -1,3 +1,5 @@
+import logging
+
 from requests.sessions import Session
 from decimal import Decimal
 
@@ -34,14 +36,23 @@ class AirtableUploader():
         payload = dict(records=list(dict(fields=r) for r in self.inserts), typecast=self.typecast)
         self.inserts = []
         url = f'https://api.airtable.com/v0/{self.base}/{self.table}'
-        rate_limiter.execute(lambda: self.session.post(url, json=payload))
+        rate_limiter.execute(lambda: self.do_request('post', url, payload))
 
     def batch_update(self):
         payload = dict(records=list(dict(id=rid, fields=fields) for rid, fields in self.updates), typecast=self.typecast)
         self.updates = []
         url = f'https://api.airtable.com/v0/{self.base}/{self.table}'
-        rate_limiter.execute(lambda: self.session.patch(url, json=payload))
+        rate_limiter.execute(lambda: self.do_request('patch', url, payload))
 
+    def do_request(self, method, url, payload):
+        resp = self.session.__getattribute__(method)(url, json=payload)
+        try:
+            resp = resp.json()
+            error = resp.get('error')
+            if error is not None:
+                logging.warning(f'{error} on {method} {payload}')
+        except Exception as e:
+            logging.warning(f'{e} on {method} {payload}')
 
 def dump_to_airtable(tables, apikey='env://DATAFLOWS_AIRTABLE_APIKEY'):
     session = get_session(apikey)
