@@ -54,7 +54,7 @@ class AirtableUploader():
         except Exception as e:
             logging.warning(f'{e} on {method} {payload}')
 
-def dump_to_airtable(tables, apikey='env://DATAFLOWS_AIRTABLE_APIKEY'):
+def dump_to_airtable(tables, apikey='env://DATAFLOWS_AIRTABLE_TOKEN'):
     session = get_session(apikey)
 
     def upload(rows, uploaders):
