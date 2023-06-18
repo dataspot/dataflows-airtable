@@ -83,7 +83,7 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
                 except Exception as e:
                     retries -= 1
                     if retries == 0:
-                        throw(e)
+                        raise(e)
                     time.sleep(5)
                     continue
             yield from map(
