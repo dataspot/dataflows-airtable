@@ -42,6 +42,11 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
         singleSelect='string',
         url='string',
     )
+    EXTRA_FIELDS = dict(
+        dateTime=dict(
+            format='%Y-%m-%dT%H:%M:%S.%fZ'
+        ),
+    )
 
 
     def describe_table():
@@ -58,7 +63,7 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
                 ]
                 for field in table_rec['fields']:
                     steps.append(
-                        DF.add_field(field['name'], TYPE_CONVERSION[field['type']], resources=table),
+                        DF.add_field(field['name'], TYPE_CONVERSION[field['type']], resources=table, **EXTRA_FIELDS.get(field['type'], {})),
                     )
                 return DF.Flow(*steps)
         except Exception as e:
