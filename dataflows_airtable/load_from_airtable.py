@@ -43,9 +43,9 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
         url='string',
     )
     EXTRA_FIELDS = dict(
-        dateTime=dict(
-            format='%Y-%m-%dT%H:%M:%S.%fZ'
-        ),
+        createdTime=dict(format='%Y-%m-%dT%H:%M:%S.%fZ'),
+        dateTime=dict(format='%Y-%m-%dT%H:%M:%S.%fZ'),
+        lastModifiedTime=dict(format='%Y-%m-%dT%H:%M:%S.%fZ'),
     )
 
 
