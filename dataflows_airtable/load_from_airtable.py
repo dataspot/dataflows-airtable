@@ -3,6 +3,8 @@ import dataflows as DF
 from .utilities import get_session, rate_limiter
 from .consts import AIRTABLE_ID_FIELD
 
+SCHEMA_CACHE = {}
+
 
 def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_TOKEN'):
     session = get_session(apikey)
@@ -51,10 +53,17 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
 
     def describe_table():
         try:
-            url = f'https://api.airtable.com/v0/meta/bases/{base}/tables'
-            resp = rate_limiter.execute(lambda: session.get(url, timeout=10).json())
+            if base in SCHEMA_CACHE:
+                resp = SCHEMA_CACHE[base]
+            else:
+                url = f'https://api.airtable.com/v0/meta/bases/{base}/tables?include=visibleFieldIds'
+                resp = rate_limiter.execute(lambda: session.get(url, timeout=10).json())
+                SCHEMA_CACHE[base] = resp
             tables = resp.get('tables', [])
             table_rec = next(filter(lambda t: t['name'] == table, tables), None)
+            views = table_rec.get('views', [])
+            view_rec = next(filter(lambda v: v['name'] == view, views), None)
+            visibleFields = view_rec.get('visibleFieldIds') if view_rec else None
             if table_rec:
                 steps = [
                     [],
@@ -62,6 +71,8 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
                     DF.add_field(AIRTABLE_ID_FIELD, 'string', resources=table),
                 ]
                 for field in table_rec['fields']:
+                    if visibleFields and field['id'] not in visibleFields:
+                        continue
                     steps.append(
                         DF.add_field(field['name'], TYPE_CONVERSION[field['type']], resources=table, **EXTRA_FIELDS.get(field['type'], {})),
                     )
