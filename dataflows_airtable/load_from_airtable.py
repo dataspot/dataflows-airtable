@@ -1,7 +1,7 @@
 import time
 import dataflows as DF
 from .utilities import get_session, rate_limiter
-from .consts import AIRTABLE_ID_FIELD
+from .consts import AIRTABLE_ID_FIELD, HTTP_TIMEOUT
 
 SCHEMA_CACHE = {}
 
@@ -57,7 +57,7 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
                 resp = SCHEMA_CACHE[base]
             else:
                 url = f'https://api.airtable.com/v0/meta/bases/{base}/tables?include=visibleFieldIds'
-                resp = rate_limiter.execute(lambda: session.get(url, timeout=10).json())
+                resp = rate_limiter.execute(lambda: session.get(url, timeout=HTTP_TIMEOUT).json())
                 SCHEMA_CACHE[base] = resp
             tables = resp.get('tables', [])
             table_rec = next(filter(lambda t: t['name'] == table, tables), None)
@@ -94,7 +94,7 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
             retries = 3
             while True:
                 try:
-                    resp = rate_limiter.execute(lambda: session.get(url, params=params, timeout=10).json())
+                    resp = rate_limiter.execute(lambda: session.get(url, params=params, timeout=HTTP_TIMEOUT).json())
                     break
                 except Exception as e:
                     retries -= 1

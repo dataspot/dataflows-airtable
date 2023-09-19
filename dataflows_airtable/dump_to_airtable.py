@@ -4,7 +4,7 @@ from requests.sessions import Session
 from decimal import Decimal
 
 from .utilities import get_session, rate_limiter
-from .consts import AIRTABLE_ID_FIELD
+from .consts import AIRTABLE_ID_FIELD, HTTP_TIMEOUT
 
 
 class AirtableUploader():
@@ -45,7 +45,7 @@ class AirtableUploader():
         rate_limiter.execute(lambda: self.do_request('patch', url, payload))
 
     def do_request(self, method, url, payload):
-        resp = self.session.__getattribute__(method)(url, json=payload)
+        resp = self.session.__getattribute__(method)(url, json=payload, timeout=HTTP_TIMEOUT)
         try:
             resp = resp.json()
             error = resp.get('error')
