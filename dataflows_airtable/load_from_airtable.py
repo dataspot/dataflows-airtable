@@ -64,6 +64,7 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
             views = table_rec.get('views', [])
             view_rec = next(filter(lambda v: v['name'] == view, views), None)
             visibleFields = view_rec.get('visibleFieldIds') if view_rec else None
+            select_field_names = None
             if table_rec:
                 steps = [
                     [],
@@ -79,8 +80,8 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
                         DF.add_field(field['name'], TYPE_CONVERSION[field['type']], resources=table, **EXTRA_FIELDS.get(field['type'], {})),
                     )
                 if visibleFields:
-                    steps.append(DF.select_fields(field_names, resources=table))
-                return DF.Flow(*steps)
+                    select_field_names = DF.Flow(DF.select_fields(field_names, resources=table))
+                return DF.Flow(*steps), select_field_names
         except Exception as e:
             print('Error fetching schema:', e)
         print(f'Failed to find table {table} in base schema')
@@ -124,11 +125,12 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
                 yield from rows
         return func
 
-    describe = describe_table()
+    describe, select = describe_table()
     if describe:
         return DF.Flow(
             describe,
             load(),
+            select,
         )
     else:
         return DF.Flow(
