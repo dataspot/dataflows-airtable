@@ -9,7 +9,9 @@ SCHEMA_CACHE = {}
 def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_TOKEN'):
     session = get_session(apikey)
 
+    MESSAGE_COUNT = 1000
     TYPE_CONVERSION = dict(
+        aiText='object',
         autoNumber='integer',
         barcode='object',
         button='object',
@@ -94,6 +96,8 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
             pageSize=100
         )
         count = 0
+        message_count = -MESSAGE_COUNT
+
         print(f'Loading records for {base}/{table}...')
         while True:
             retries = 3
@@ -112,10 +116,14 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
                 resp.get('records', [])
             )
             count += len(resp.get('records', []))
-            print(f'Loaded {count} records for {base}/{table}')
+
+            if count >= message_count + MESSAGE_COUNT:
+                message_count += MESSAGE_COUNT
+                print(f'Loaded {message_count} records for {base}/{table}')
             if not resp.get('offset'):
                 break
             params['offset'] = resp.get('offset')
+        print(f'Loaded {count} records for {base}/{table}')
 
     def load():
         def func(rows):
