@@ -82,7 +82,7 @@ def load_from_airtable(base, table, view=None, apikey='env://DATAFLOWS_AIRTABLE_
                         DF.add_field(field['name'], TYPE_CONVERSION[field['type']], resources=table, **EXTRA_FIELDS.get(field['type'], {})),
                     )
                 if visibleFields:
-                    select_field_names = DF.Flow(DF.select_fields(field_names, resources=table))
+                    select_field_names = DF.Flow(DF.select_fields(field_names, regex=False, resources=table))
                 return DF.Flow(*steps), select_field_names
         except Exception as e:
             print('Error fetching schema:', e)
